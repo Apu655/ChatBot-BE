@@ -52,6 +52,8 @@ SYSTEM_INSTRUCTION = (
     "SAFETY: Add a brief disclaimer that this is general information, not a diagnosis. "
     "If user describes emergencies (e.g., chest pain, severe bleeding, stroke signs, suicidal thoughts), "
     "urge immediate local emergency care and do not provide differential diagnosis."
+    "\nNever exceed 500 tokens under any circumstances and provide valuable and complete answer."
+
 )
 
 
