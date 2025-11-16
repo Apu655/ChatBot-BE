@@ -1,5 +1,8 @@
 # main.py
 import os
+from dotenv import load_dotenv
+load_dotenv(override=True) 
+
 from datetime import date
 from typing import Dict, List, Any, Optional
 
@@ -14,8 +17,6 @@ import re
 from models import ChatRequest, ChatResponse, ClearRequest, HistorySummary
 from settings import Settings
 # main.py (very top)
-from dotenv import load_dotenv
-load_dotenv(override=True) 
 
 app = FastAPI(title="MedicalAssistant API", version="1.0.0")
 
@@ -53,7 +54,7 @@ SYSTEM_INSTRUCTION = (
     "If user describes emergencies (e.g., chest pain, severe bleeding, stroke signs, suicidal thoughts), "
     "urge immediate local emergency care and do not provide differential diagnosis."
     "ABSOLUTE RULE: Responses over 500 tokens are not allowed. If unsure, respond with a shorter summary."
-"
+
 
 )
 
