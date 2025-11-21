@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class Settings(BaseModel):
     API_KEY: str = os.getenv("GOOGLE_GENAI_API_KEY", "")
     MODEL_NAME: str = os.getenv("MODEL_NAME", "gemini-2.5-flash")
-    MAX_OUTPUT_TOKENS: int = int(os.getenv("MAX_OUTPUT_TOKENS", "1000"))
+    MAX_OUTPUT_TOKENS: int = int(os.getenv("MAX_OUTPUT_TOKENS", "1200"))
     TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.3"))
 
     # summarization knobs
