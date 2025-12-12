@@ -1,26 +1,16 @@
-# main.py
 import os
 from dotenv import load_dotenv
 load_dotenv(override=True) 
-
 from datetime import date
 from typing import Dict, List, Any, Optional
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
 from google import genai
 from google.genai import types
 import re
-
-
 from models import ChatRequest, ChatResponse, ClearRequest, HistorySummary
 from settings import Settings
-# main.py (very top)
-
 app = FastAPI(title="MedicalAssistant API", version="1.0.0")
-
-# --- CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "*").split(","),
@@ -28,35 +18,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # --- Settings & Google client ---
 settings = Settings()
 client = genai.Client(api_key=settings.API_KEY)
 
-# SYSTEM_INSTRUCTION = (
-#     "You are a medical Doctor. Your name is MetLife doctor. "
-#     "You help and assist with medical related topics that serves users. "
-#     "Provide sources of your statement as well to support your medical treatment."
-#     "Do not reply or answer without any source."
-#     "Do not reply to anything other than medical related queries. Avoid political opinions and statements."
-# )
-
-# main.py (only the relevant parts shown)
-
 SYSTEM_INSTRUCTION = (
-    "ROLE: You are a healthcare and cautious medical assistant name Welli.\n"
-    "SCOPE: Only answer medical/health questions. Refuse anything else.\n"
+    "ROLE: You are a healthcare and cautious medical assistant name Welli.You provide mental health support as well.\n"
+    "SCOPE: Only answer medical/health questions. Provide mental health support with empathy. Refuse anything else.\n"
     "QUALITY: Be accurate, up-to-date, and evidence-based. Try to be friendly and empathetic and provide emoji if necessary"
-    "CITATIONS: Include 1–3 reliable sources (guidelines, peer-reviewed articles, or major health orgs). "
+    "CITATIONS: Include 1–3 reliable sources (guidelines, peer-reviewed articles, or major health orgs) if you suggest any medical solutions or treatment. "
     "FORMAT: Keep responses concise, plain language, with short paragraphs or bullet points. "
     "SAFETY: Add a brief disclaimer that this is general information, not a diagnosis. "
     "If user describes emergencies (e.g., chest pain, severe bleeding, stroke signs, suicidal thoughts), "
     "urge immediate local emergency care and do not provide primary diagnosis but encourage to consult a doctor."
     "ABSOLUTE RULE: Responses over 1000 tokens are not allowed. If unsure, respond with a shorter summary."
-
-
 )
-
 
 NON_MEDICAL_PATTERNS = re.compile(
     r"\b(politics?|mayor|president|stocks?|crypto|programming|math homework|sports?)\b",
@@ -66,8 +42,6 @@ EMERGENCY_PATTERNS = re.compile(
     r"(chest pain|shortness of breath|severe bleeding|stroke|suicid|overdose|unconscious)",
     re.I,
 )
-
-
 def is_non_medical(msg: str) -> bool:
     return bool(NON_MEDICAL_PATTERNS.search(msg))
 
@@ -82,12 +56,6 @@ def trim_to_words(text: str, max_words: int) -> str:
     words = text.split()
     return " ".join(words[:max_words])
 
-
-
-
-# --- Conversation store (in-memory per session_id) ---
-# For multi-instance or persistence, back this with Redis or a DB.
-# Key: session_id -> list[dict(role, parts=[{text}])]
 CONV_STORE: Dict[str, List[Dict[str, Any]]] = {}
 
 def get_history(session_id: str) -> List[Dict[str, Any]]:
@@ -120,16 +88,11 @@ def healthz():
 def chat(req: ChatRequest):
     if not req.session_id or not req.message:
         raise HTTPException(status_code=400, detail="session_id and message are required")
-
     history = get_history(req.session_id)
-
-    # append user message
     history.append({"role": "user", "parts": [{"text": req.message}]})
     set_history(req.session_id, history)
     if is_non_medical(req.message):
         raise HTTPException(status_code=400, detail="Only medical questions are allowed.")
-
-    # generate response
     try:
         response = client.models.generate_content(
             model=settings.MODEL_NAME,
@@ -143,18 +106,13 @@ def chat(req: ChatRequest):
         text = response.text if hasattr(response, "text") else ""
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Model error: {e}")
-
     if not text:
-        
         raise HTTPException(status_code=502, detail="Empty response from model")
-
     # append assistant response
     history.append({"role": "model", "parts": [{"text": text}]})
     set_history(req.session_id, history)
-
     # optional summarization to keep context short
     summarize_old_context(req.session_id)
-
     return ChatResponse(text=text)
 
 @app.post("/clear")
