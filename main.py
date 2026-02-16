@@ -120,6 +120,10 @@ def clear(req: ClearRequest):
     set_history(req.session_id, [])
     return {"ok": True}
 
+@app.post("/reaction")
+def clear():
+    return "challenge"
+
 @app.get("/history/{session_id}", response_model=HistorySummary)
 def history_summary(session_id: str):
     history = get_history(session_id)
