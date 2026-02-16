@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 load_dotenv(override=True) 
 from datetime import date
 from typing import Dict, List, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from google import genai
 from google.genai import types
 import re
@@ -121,8 +123,15 @@ def clear(req: ClearRequest):
     return {"ok": True}
 
 @app.post("/reaction")
-def clear():
-    return "challenge"
+async def slack_events(request: Request):
+    payload = await request.json()
+    if payload.get("type") == "url_verification":
+        return JSONResponse(content={"challenge": payload["challenge"]})
+    event = payload.get("event", {})
+    if event.get("type") == "reaction_added":
+        print("Reaction detected")
+    
+    return JSONResponse(content={"ok": True})
 
 @app.get("/history/{session_id}", response_model=HistorySummary)
 def history_summary(session_id: str):
