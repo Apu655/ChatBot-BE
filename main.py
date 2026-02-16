@@ -12,6 +12,8 @@ from google.genai import types
 import re
 from models import ChatRequest, ChatResponse, ClearRequest, HistorySummary
 from settings import Settings
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 app = FastAPI(title="MedicalAssistant API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +25,7 @@ app.add_middleware(
 # --- Settings & Google client ---
 settings = Settings()
 client = genai.Client(api_key=settings.API_KEY)
+client_slack =  WebClient(token = settings.SLACK_TOKEN)
 
 SYSTEM_INSTRUCTION = (
     "ROLE: You are a secured, healthcare and cautious medical assistant name SeCAREly.You provide mental health support as well.\n"
